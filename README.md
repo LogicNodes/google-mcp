@@ -1,8 +1,30 @@
 # Google MCP Server
 
-A comprehensive Model Context Protocol (MCP) server for Google integration, providing access to Google Calendar, Docs, Sheets, Slides, Drive, Gmail, Contacts, YouTube, and Tasks.
+A comprehensive Model Context Protocol (MCP) server for Google integration, providing access to Google Calendar, Docs, Sheets, Slides, Drive, Gmail, Contacts, YouTube, Tasks, Forms, Chat, and Meet.
 
 ## Features
+
+### Google Forms
+- Create and manage Google Forms
+- Add questions (multiple choice, short answer, checkboxes, etc.)
+- Add page breaks, text items, images, and videos
+- List and retrieve form responses
+- Update form settings (quiz mode, etc.)
+
+### Google Chat
+- List, create, and manage Chat spaces
+- Send, update, and delete messages
+- Add and remove reactions
+- Manage space members
+- Thread support for conversations
+
+### Google Meet
+- Create meeting spaces with access controls
+- Schedule meetings via Calendar integration
+- Create instant meetings
+- List and access conference records
+- View participant information
+- Access meeting recordings and transcripts
 
 ### Google Calendar
 - List calendars and events
@@ -97,6 +119,9 @@ Before using this server, you need to set up Google Cloud credentials:
    - People API (Contacts)
    - YouTube Data API v3
    - Google Tasks API
+   - Google Forms API
+   - Google Chat API
+   - Google Meet REST API
 
 ### 2. Create OAuth 2.0 Credentials
 
@@ -318,6 +343,57 @@ Tokens are stored locally and will be refreshed automatically:
 | `notes_update` | Update a note |
 | `notes_delete` | Delete a note |
 
+### Google Forms
+| Tool | Description |
+|------|-------------|
+| `forms_create` | Create a new form |
+| `forms_get` | Get form details |
+| `forms_update_info` | Update title/description |
+| `forms_add_question` | Add a question |
+| `forms_delete_item` | Delete form item |
+| `forms_list_responses` | List form responses |
+| `forms_get_response` | Get specific response |
+| `forms_add_page_break` | Add page break |
+| `forms_add_text` | Add text item |
+| `forms_add_image` | Add image |
+| `forms_add_video` | Add YouTube video |
+
+### Google Chat
+| Tool | Description |
+|------|-------------|
+| `chat_list_spaces` | List Chat spaces |
+| `chat_get_space` | Get space details |
+| `chat_create_space` | Create a space |
+| `chat_delete_space` | Delete a space |
+| `chat_list_messages` | List messages |
+| `chat_get_message` | Get message details |
+| `chat_send_message` | Send a message |
+| `chat_update_message` | Update a message |
+| `chat_delete_message` | Delete a message |
+| `chat_list_members` | List space members |
+| `chat_add_member` | Add a member |
+| `chat_remove_member` | Remove a member |
+| `chat_add_reaction` | Add emoji reaction |
+
+### Google Meet
+| Tool | Description |
+|------|-------------|
+| `meet_create_space` | Create meeting space |
+| `meet_get_space` | Get space details |
+| `meet_end_conference` | End active meeting |
+| `meet_schedule` | Schedule a meeting |
+| `meet_create_instant` | Create instant meeting |
+| `meet_get_by_event` | Get meeting from event |
+| `meet_list_upcoming` | List upcoming meetings |
+| `meet_list_conference_records` | List past meetings |
+| `meet_get_conference_record` | Get meeting record |
+| `meet_list_participants` | List participants |
+| `meet_list_recordings` | List recordings |
+| `meet_get_recording` | Get recording |
+| `meet_list_transcripts` | List transcripts |
+| `meet_get_transcript` | Get transcript |
+| `meet_list_transcript_entries` | Get transcript text |
+
 ## Examples
 
 ### Send an Email
@@ -353,6 +429,21 @@ Use drive_search with query "quarterly report"
 ### Create a Note
 ```
 Use notes_create with title "Shopping List" and content "- Milk\n- Eggs\n- Bread"
+```
+
+### Create a Google Form
+```
+Use forms_create with title "Customer Survey" and description "Help us improve our service"
+```
+
+### Send a Chat Message
+```
+Use chat_send_message with spaceName "spaces/AAAAA" and text "Hello team!"
+```
+
+### Schedule a Google Meet
+```
+Use meet_schedule with summary "Team Standup", startTime "2024-12-25T09:00:00-05:00", and endTime "2024-12-25T09:30:00-05:00"
 ```
 
 ## Development

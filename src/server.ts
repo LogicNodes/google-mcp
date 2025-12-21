@@ -16,6 +16,9 @@ import { GmailService } from "./services/gmail.js";
 import { PeopleService } from "./services/people.js";
 import { YouTubeService } from "./services/youtube.js";
 import { SlidesService } from "./services/slides.js";
+import { FormsService } from "./services/forms.js";
+import { ChatService } from "./services/chat.js";
+import { MeetService } from "./services/meet.js";
 import {
   DriveListOptionsSchema,
   DocCreateOptionsSchema,
@@ -47,6 +50,9 @@ export class GoogleWorkspaceMCPServer {
   private people: PeopleService | null = null;
   private youtube: YouTubeService | null = null;
   private slidesService: SlidesService | null = null;
+  private forms: FormsService | null = null;
+  private chat: ChatService | null = null;
+  private meet: MeetService | null = null;
 
   constructor() {
     this.server = new Server(
@@ -77,6 +83,9 @@ export class GoogleWorkspaceMCPServer {
       this.people = new PeopleService(client);
       this.youtube = new YouTubeService(client);
       this.slidesService = new SlidesService(client);
+      this.forms = new FormsService(client);
+      this.chat = new ChatService(client);
+      this.meet = new MeetService(client);
     }
   }
 
@@ -1897,6 +1906,819 @@ export class GoogleWorkspaceMCPServer {
               required: ["presentationId", "slideObjectId"],
             },
           },
+
+          // Google Forms Tools
+          {
+            name: "forms_create",
+            description: "Create a new Google Form.",
+            inputSchema: {
+              type: "object",
+              properties: {
+                title: {
+                  type: "string",
+                  description: "The title of the form",
+                },
+                documentTitle: {
+                  type: "string",
+                  description: "The document title (defaults to title)",
+                },
+                description: {
+                  type: "string",
+                  description: "The description of the form",
+                },
+              },
+              required: ["title"],
+            },
+          },
+          {
+            name: "forms_get",
+            description: "Get a Google Form by ID.",
+            inputSchema: {
+              type: "object",
+              properties: {
+                formId: {
+                  type: "string",
+                  description: "The form ID",
+                },
+              },
+              required: ["formId"],
+            },
+          },
+          {
+            name: "forms_update_info",
+            description: "Update form title and description.",
+            inputSchema: {
+              type: "object",
+              properties: {
+                formId: {
+                  type: "string",
+                  description: "The form ID",
+                },
+                title: {
+                  type: "string",
+                  description: "New title",
+                },
+                description: {
+                  type: "string",
+                  description: "New description",
+                },
+              },
+              required: ["formId"],
+            },
+          },
+          {
+            name: "forms_add_question",
+            description: "Add a question to a form.",
+            inputSchema: {
+              type: "object",
+              properties: {
+                formId: {
+                  type: "string",
+                  description: "The form ID",
+                },
+                title: {
+                  type: "string",
+                  description: "Question title",
+                },
+                description: {
+                  type: "string",
+                  description: "Question description",
+                },
+                required: {
+                  type: "boolean",
+                  description: "Whether the question is required",
+                },
+                index: {
+                  type: "number",
+                  description: "Position to insert (0-based)",
+                },
+                questionType: {
+                  type: "string",
+                  enum: ["short_answer", "paragraph", "multiple_choice", "checkboxes", "dropdown", "linear_scale", "date", "time"],
+                  description: "Type of question",
+                },
+                options: {
+                  type: "array",
+                  items: { type: "string" },
+                  description: "Options for choice questions",
+                },
+                scaleConfig: {
+                  type: "object",
+                  properties: {
+                    low: { type: "number" },
+                    high: { type: "number" },
+                    lowLabel: { type: "string" },
+                    highLabel: { type: "string" },
+                  },
+                  description: "Configuration for linear scale questions",
+                },
+              },
+              required: ["formId", "title", "questionType"],
+            },
+          },
+          {
+            name: "forms_delete_item",
+            description: "Delete an item from a form.",
+            inputSchema: {
+              type: "object",
+              properties: {
+                formId: {
+                  type: "string",
+                  description: "The form ID",
+                },
+                itemIndex: {
+                  type: "number",
+                  description: "Index of the item to delete (0-based)",
+                },
+              },
+              required: ["formId", "itemIndex"],
+            },
+          },
+          {
+            name: "forms_list_responses",
+            description: "List responses to a form.",
+            inputSchema: {
+              type: "object",
+              properties: {
+                formId: {
+                  type: "string",
+                  description: "The form ID",
+                },
+                pageSize: {
+                  type: "number",
+                  description: "Number of responses to return",
+                },
+                pageToken: {
+                  type: "string",
+                  description: "Token for pagination",
+                },
+              },
+              required: ["formId"],
+            },
+          },
+          {
+            name: "forms_get_response",
+            description: "Get a specific form response.",
+            inputSchema: {
+              type: "object",
+              properties: {
+                formId: {
+                  type: "string",
+                  description: "The form ID",
+                },
+                responseId: {
+                  type: "string",
+                  description: "The response ID",
+                },
+              },
+              required: ["formId", "responseId"],
+            },
+          },
+          {
+            name: "forms_add_page_break",
+            description: "Add a page break to a form.",
+            inputSchema: {
+              type: "object",
+              properties: {
+                formId: {
+                  type: "string",
+                  description: "The form ID",
+                },
+                title: {
+                  type: "string",
+                  description: "Title for the new section",
+                },
+                index: {
+                  type: "number",
+                  description: "Position to insert (0-based)",
+                },
+              },
+              required: ["formId", "title"],
+            },
+          },
+          {
+            name: "forms_add_text",
+            description: "Add a text/description item to a form.",
+            inputSchema: {
+              type: "object",
+              properties: {
+                formId: {
+                  type: "string",
+                  description: "The form ID",
+                },
+                title: {
+                  type: "string",
+                  description: "Title of the text item",
+                },
+                description: {
+                  type: "string",
+                  description: "Description text",
+                },
+                index: {
+                  type: "number",
+                  description: "Position to insert (0-based)",
+                },
+              },
+              required: ["formId", "title"],
+            },
+          },
+          {
+            name: "forms_add_image",
+            description: "Add an image to a form.",
+            inputSchema: {
+              type: "object",
+              properties: {
+                formId: {
+                  type: "string",
+                  description: "The form ID",
+                },
+                sourceUri: {
+                  type: "string",
+                  description: "URL of the image",
+                },
+                title: {
+                  type: "string",
+                  description: "Title for the image",
+                },
+                altText: {
+                  type: "string",
+                  description: "Alt text for accessibility",
+                },
+                index: {
+                  type: "number",
+                  description: "Position to insert (0-based)",
+                },
+              },
+              required: ["formId", "sourceUri"],
+            },
+          },
+          {
+            name: "forms_add_video",
+            description: "Add a YouTube video to a form.",
+            inputSchema: {
+              type: "object",
+              properties: {
+                formId: {
+                  type: "string",
+                  description: "The form ID",
+                },
+                youtubeUri: {
+                  type: "string",
+                  description: "YouTube video URL",
+                },
+                title: {
+                  type: "string",
+                  description: "Title for the video",
+                },
+                caption: {
+                  type: "string",
+                  description: "Caption for the video",
+                },
+                index: {
+                  type: "number",
+                  description: "Position to insert (0-based)",
+                },
+              },
+              required: ["formId", "youtubeUri"],
+            },
+          },
+
+          // Google Chat Tools
+          {
+            name: "chat_list_spaces",
+            description: "List Google Chat spaces.",
+            inputSchema: {
+              type: "object",
+              properties: {
+                pageSize: {
+                  type: "number",
+                  description: "Number of spaces to return (default 100)",
+                },
+                pageToken: {
+                  type: "string",
+                  description: "Token for pagination",
+                },
+              },
+              required: [],
+            },
+          },
+          {
+            name: "chat_get_space",
+            description: "Get a Google Chat space by name.",
+            inputSchema: {
+              type: "object",
+              properties: {
+                spaceName: {
+                  type: "string",
+                  description: "The space resource name (e.g., spaces/AAAAA)",
+                },
+              },
+              required: ["spaceName"],
+            },
+          },
+          {
+            name: "chat_create_space",
+            description: "Create a new Google Chat space.",
+            inputSchema: {
+              type: "object",
+              properties: {
+                displayName: {
+                  type: "string",
+                  description: "Display name for the space",
+                },
+                spaceType: {
+                  type: "string",
+                  enum: ["SPACE", "GROUP_CHAT", "DIRECT_MESSAGE"],
+                  description: "Type of space (default: SPACE)",
+                },
+                externalUserAllowed: {
+                  type: "boolean",
+                  description: "Whether external users can join",
+                },
+                description: {
+                  type: "string",
+                  description: "Description of the space",
+                },
+                guidelines: {
+                  type: "string",
+                  description: "Guidelines for the space",
+                },
+              },
+              required: ["displayName"],
+            },
+          },
+          {
+            name: "chat_delete_space",
+            description: "Delete a Google Chat space.",
+            inputSchema: {
+              type: "object",
+              properties: {
+                spaceName: {
+                  type: "string",
+                  description: "The space resource name",
+                },
+              },
+              required: ["spaceName"],
+            },
+          },
+          {
+            name: "chat_list_messages",
+            description: "List messages in a Google Chat space.",
+            inputSchema: {
+              type: "object",
+              properties: {
+                spaceName: {
+                  type: "string",
+                  description: "The space resource name",
+                },
+                pageSize: {
+                  type: "number",
+                  description: "Number of messages to return",
+                },
+                pageToken: {
+                  type: "string",
+                  description: "Token for pagination",
+                },
+                filter: {
+                  type: "string",
+                  description: "Filter expression",
+                },
+                orderBy: {
+                  type: "string",
+                  description: "Order by field",
+                },
+              },
+              required: ["spaceName"],
+            },
+          },
+          {
+            name: "chat_get_message",
+            description: "Get a specific message from Google Chat.",
+            inputSchema: {
+              type: "object",
+              properties: {
+                messageName: {
+                  type: "string",
+                  description: "The message resource name",
+                },
+              },
+              required: ["messageName"],
+            },
+          },
+          {
+            name: "chat_send_message",
+            description: "Send a message to a Google Chat space.",
+            inputSchema: {
+              type: "object",
+              properties: {
+                spaceName: {
+                  type: "string",
+                  description: "The space resource name",
+                },
+                text: {
+                  type: "string",
+                  description: "Message text",
+                },
+                threadKey: {
+                  type: "string",
+                  description: "Thread key for threading messages",
+                },
+              },
+              required: ["spaceName", "text"],
+            },
+          },
+          {
+            name: "chat_update_message",
+            description: "Update a message in Google Chat.",
+            inputSchema: {
+              type: "object",
+              properties: {
+                messageName: {
+                  type: "string",
+                  description: "The message resource name",
+                },
+                text: {
+                  type: "string",
+                  description: "New message text",
+                },
+              },
+              required: ["messageName", "text"],
+            },
+          },
+          {
+            name: "chat_delete_message",
+            description: "Delete a message from Google Chat.",
+            inputSchema: {
+              type: "object",
+              properties: {
+                messageName: {
+                  type: "string",
+                  description: "The message resource name",
+                },
+                force: {
+                  type: "boolean",
+                  description: "Force delete even if message has replies",
+                },
+              },
+              required: ["messageName"],
+            },
+          },
+          {
+            name: "chat_list_members",
+            description: "List members of a Google Chat space.",
+            inputSchema: {
+              type: "object",
+              properties: {
+                spaceName: {
+                  type: "string",
+                  description: "The space resource name",
+                },
+                pageSize: {
+                  type: "number",
+                  description: "Number of members to return",
+                },
+                pageToken: {
+                  type: "string",
+                  description: "Token for pagination",
+                },
+              },
+              required: ["spaceName"],
+            },
+          },
+          {
+            name: "chat_add_member",
+            description: "Add a member to a Google Chat space.",
+            inputSchema: {
+              type: "object",
+              properties: {
+                spaceName: {
+                  type: "string",
+                  description: "The space resource name",
+                },
+                userId: {
+                  type: "string",
+                  description: "User ID to add (e.g., users/123456)",
+                },
+                role: {
+                  type: "string",
+                  enum: ["ROLE_MEMBER", "ROLE_MANAGER"],
+                  description: "Role for the member (default: ROLE_MEMBER)",
+                },
+              },
+              required: ["spaceName", "userId"],
+            },
+          },
+          {
+            name: "chat_remove_member",
+            description: "Remove a member from a Google Chat space.",
+            inputSchema: {
+              type: "object",
+              properties: {
+                memberName: {
+                  type: "string",
+                  description: "The member resource name",
+                },
+              },
+              required: ["memberName"],
+            },
+          },
+          {
+            name: "chat_add_reaction",
+            description: "Add an emoji reaction to a message.",
+            inputSchema: {
+              type: "object",
+              properties: {
+                messageName: {
+                  type: "string",
+                  description: "The message resource name",
+                },
+                emoji: {
+                  type: "string",
+                  description: "Emoji to react with (Unicode)",
+                },
+              },
+              required: ["messageName", "emoji"],
+            },
+          },
+
+          // Google Meet Tools
+          {
+            name: "meet_create_space",
+            description: "Create a new Google Meet meeting space.",
+            inputSchema: {
+              type: "object",
+              properties: {
+                accessType: {
+                  type: "string",
+                  enum: ["OPEN", "TRUSTED", "RESTRICTED"],
+                  description: "Access type for the meeting",
+                },
+                entryPointAccess: {
+                  type: "string",
+                  enum: ["ALL", "CREATOR_APP_ONLY"],
+                  description: "Who can join from entry points",
+                },
+              },
+              required: [],
+            },
+          },
+          {
+            name: "meet_get_space",
+            description: "Get a Google Meet space by name.",
+            inputSchema: {
+              type: "object",
+              properties: {
+                spaceName: {
+                  type: "string",
+                  description: "The space resource name",
+                },
+              },
+              required: ["spaceName"],
+            },
+          },
+          {
+            name: "meet_end_conference",
+            description: "End an active conference in a Meet space.",
+            inputSchema: {
+              type: "object",
+              properties: {
+                spaceName: {
+                  type: "string",
+                  description: "The space resource name",
+                },
+              },
+              required: ["spaceName"],
+            },
+          },
+          {
+            name: "meet_schedule",
+            description: "Schedule a Google Meet meeting via Calendar.",
+            inputSchema: {
+              type: "object",
+              properties: {
+                summary: {
+                  type: "string",
+                  description: "Meeting title",
+                },
+                description: {
+                  type: "string",
+                  description: "Meeting description",
+                },
+                startTime: {
+                  type: "string",
+                  description: "Start time in ISO 8601 format",
+                },
+                endTime: {
+                  type: "string",
+                  description: "End time in ISO 8601 format",
+                },
+                attendees: {
+                  type: "array",
+                  items: { type: "string" },
+                  description: "List of attendee email addresses",
+                },
+                timeZone: {
+                  type: "string",
+                  description: "Time zone (default: UTC)",
+                },
+                sendUpdates: {
+                  type: "string",
+                  enum: ["all", "externalOnly", "none"],
+                  description: "Whether to send email notifications",
+                },
+              },
+              required: ["summary", "startTime", "endTime"],
+            },
+          },
+          {
+            name: "meet_create_instant",
+            description: "Create an instant Google Meet meeting.",
+            inputSchema: {
+              type: "object",
+              properties: {},
+              required: [],
+            },
+          },
+          {
+            name: "meet_get_by_event",
+            description: "Get meeting details from a calendar event.",
+            inputSchema: {
+              type: "object",
+              properties: {
+                eventId: {
+                  type: "string",
+                  description: "Calendar event ID",
+                },
+              },
+              required: ["eventId"],
+            },
+          },
+          {
+            name: "meet_list_upcoming",
+            description: "List upcoming meetings from calendar.",
+            inputSchema: {
+              type: "object",
+              properties: {
+                days: {
+                  type: "number",
+                  description: "Number of days to look ahead (default: 7)",
+                },
+              },
+              required: [],
+            },
+          },
+          {
+            name: "meet_list_conference_records",
+            description: "List past conference records.",
+            inputSchema: {
+              type: "object",
+              properties: {
+                pageSize: {
+                  type: "number",
+                  description: "Number of records to return",
+                },
+                pageToken: {
+                  type: "string",
+                  description: "Token for pagination",
+                },
+                filter: {
+                  type: "string",
+                  description: "Filter expression",
+                },
+              },
+              required: [],
+            },
+          },
+          {
+            name: "meet_get_conference_record",
+            description: "Get a specific conference record.",
+            inputSchema: {
+              type: "object",
+              properties: {
+                recordName: {
+                  type: "string",
+                  description: "The conference record resource name",
+                },
+              },
+              required: ["recordName"],
+            },
+          },
+          {
+            name: "meet_list_participants",
+            description: "List participants of a conference.",
+            inputSchema: {
+              type: "object",
+              properties: {
+                conferenceRecordName: {
+                  type: "string",
+                  description: "The conference record resource name",
+                },
+                pageSize: {
+                  type: "number",
+                  description: "Number of participants to return",
+                },
+                pageToken: {
+                  type: "string",
+                  description: "Token for pagination",
+                },
+              },
+              required: ["conferenceRecordName"],
+            },
+          },
+          {
+            name: "meet_list_recordings",
+            description: "List recordings of a conference.",
+            inputSchema: {
+              type: "object",
+              properties: {
+                conferenceRecordName: {
+                  type: "string",
+                  description: "The conference record resource name",
+                },
+                pageSize: {
+                  type: "number",
+                  description: "Number of recordings to return",
+                },
+                pageToken: {
+                  type: "string",
+                  description: "Token for pagination",
+                },
+              },
+              required: ["conferenceRecordName"],
+            },
+          },
+          {
+            name: "meet_get_recording",
+            description: "Get a specific recording.",
+            inputSchema: {
+              type: "object",
+              properties: {
+                recordingName: {
+                  type: "string",
+                  description: "The recording resource name",
+                },
+              },
+              required: ["recordingName"],
+            },
+          },
+          {
+            name: "meet_list_transcripts",
+            description: "List transcripts of a conference.",
+            inputSchema: {
+              type: "object",
+              properties: {
+                conferenceRecordName: {
+                  type: "string",
+                  description: "The conference record resource name",
+                },
+                pageSize: {
+                  type: "number",
+                  description: "Number of transcripts to return",
+                },
+                pageToken: {
+                  type: "string",
+                  description: "Token for pagination",
+                },
+              },
+              required: ["conferenceRecordName"],
+            },
+          },
+          {
+            name: "meet_get_transcript",
+            description: "Get a specific transcript.",
+            inputSchema: {
+              type: "object",
+              properties: {
+                transcriptName: {
+                  type: "string",
+                  description: "The transcript resource name",
+                },
+              },
+              required: ["transcriptName"],
+            },
+          },
+          {
+            name: "meet_list_transcript_entries",
+            description: "List entries in a transcript.",
+            inputSchema: {
+              type: "object",
+              properties: {
+                transcriptName: {
+                  type: "string",
+                  description: "The transcript resource name",
+                },
+                pageSize: {
+                  type: "number",
+                  description: "Number of entries to return",
+                },
+                pageToken: {
+                  type: "string",
+                  description: "Token for pagination",
+                },
+              },
+              required: ["transcriptName"],
+            },
+          },
         ],
       };
     });
@@ -3273,6 +4095,474 @@ export class GoogleWorkspaceMCPServer {
           const newSlideId = await this.slidesService!.duplicateSlide(presentationId, slideObjectId);
           return {
             content: [{ type: "text", text: JSON.stringify({ newSlideId }, null, 2) }],
+          };
+        }
+
+        // Google Forms handlers
+        if (name === "forms_create") {
+          this.ensureAuthenticated();
+          const { title, documentTitle, description } = args as {
+            title: string;
+            documentTitle?: string;
+            description?: string;
+          };
+          const form = await this.forms!.createForm({ title, documentTitle, description });
+          return {
+            content: [{ type: "text", text: JSON.stringify(form, null, 2) }],
+          };
+        }
+
+        if (name === "forms_get") {
+          this.ensureAuthenticated();
+          const { formId } = args as { formId: string };
+          const form = await this.forms!.getForm(formId);
+          return {
+            content: [{ type: "text", text: JSON.stringify(form, null, 2) }],
+          };
+        }
+
+        if (name === "forms_update_info") {
+          this.ensureAuthenticated();
+          const { formId, title, description } = args as {
+            formId: string;
+            title?: string;
+            description?: string;
+          };
+          const form = await this.forms!.updateFormInfo(formId, { title, description });
+          return {
+            content: [{ type: "text", text: JSON.stringify(form, null, 2) }],
+          };
+        }
+
+        if (name === "forms_add_question") {
+          this.ensureAuthenticated();
+          const { formId, title, description, required, index, questionType, options, scaleConfig } = args as {
+            formId: string;
+            title: string;
+            description?: string;
+            required?: boolean;
+            index?: number;
+            questionType: "short_answer" | "paragraph" | "multiple_choice" | "checkboxes" | "dropdown" | "linear_scale" | "date" | "time";
+            options?: string[];
+            scaleConfig?: { low: number; high: number; lowLabel?: string; highLabel?: string };
+          };
+          const item = await this.forms!.addQuestion({
+            formId,
+            title,
+            description,
+            required,
+            index,
+            questionType,
+            options,
+            scaleConfig,
+          });
+          return {
+            content: [{ type: "text", text: JSON.stringify(item, null, 2) }],
+          };
+        }
+
+        if (name === "forms_delete_item") {
+          this.ensureAuthenticated();
+          const { formId, itemIndex } = args as { formId: string; itemIndex: number };
+          await this.forms!.deleteItem(formId, itemIndex);
+          return {
+            content: [{ type: "text", text: `Item at index ${itemIndex} deleted.` }],
+          };
+        }
+
+        if (name === "forms_list_responses") {
+          this.ensureAuthenticated();
+          const { formId, pageSize, pageToken } = args as {
+            formId: string;
+            pageSize?: number;
+            pageToken?: string;
+          };
+          const result = await this.forms!.listResponses(formId, { pageSize, pageToken });
+          return {
+            content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+          };
+        }
+
+        if (name === "forms_get_response") {
+          this.ensureAuthenticated();
+          const { formId, responseId } = args as { formId: string; responseId: string };
+          const response = await this.forms!.getResponse(formId, responseId);
+          return {
+            content: [{ type: "text", text: JSON.stringify(response, null, 2) }],
+          };
+        }
+
+        if (name === "forms_add_page_break") {
+          this.ensureAuthenticated();
+          const { formId, title, index } = args as { formId: string; title: string; index?: number };
+          const item = await this.forms!.addPageBreak(formId, title, index);
+          return {
+            content: [{ type: "text", text: JSON.stringify(item, null, 2) }],
+          };
+        }
+
+        if (name === "forms_add_text") {
+          this.ensureAuthenticated();
+          const { formId, title, description, index } = args as {
+            formId: string;
+            title: string;
+            description?: string;
+            index?: number;
+          };
+          const item = await this.forms!.addTextItem(formId, title, description, index);
+          return {
+            content: [{ type: "text", text: JSON.stringify(item, null, 2) }],
+          };
+        }
+
+        if (name === "forms_add_image") {
+          this.ensureAuthenticated();
+          const { formId, sourceUri, title, altText, index } = args as {
+            formId: string;
+            sourceUri: string;
+            title?: string;
+            altText?: string;
+            index?: number;
+          };
+          const item = await this.forms!.addImage(formId, sourceUri, { title, altText, index });
+          return {
+            content: [{ type: "text", text: JSON.stringify(item, null, 2) }],
+          };
+        }
+
+        if (name === "forms_add_video") {
+          this.ensureAuthenticated();
+          const { formId, youtubeUri, title, caption, index } = args as {
+            formId: string;
+            youtubeUri: string;
+            title?: string;
+            caption?: string;
+            index?: number;
+          };
+          const item = await this.forms!.addVideo(formId, youtubeUri, { title, caption, index });
+          return {
+            content: [{ type: "text", text: JSON.stringify(item, null, 2) }],
+          };
+        }
+
+        // Google Chat handlers
+        if (name === "chat_list_spaces") {
+          this.ensureAuthenticated();
+          const { pageSize, pageToken } = args as { pageSize?: number; pageToken?: string };
+          const result = await this.chat!.listSpaces(pageSize, pageToken);
+          return {
+            content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+          };
+        }
+
+        if (name === "chat_get_space") {
+          this.ensureAuthenticated();
+          const { spaceName } = args as { spaceName: string };
+          const space = await this.chat!.getSpace(spaceName);
+          return {
+            content: [{ type: "text", text: JSON.stringify(space, null, 2) }],
+          };
+        }
+
+        if (name === "chat_create_space") {
+          this.ensureAuthenticated();
+          const { displayName, spaceType, externalUserAllowed, description, guidelines } = args as {
+            displayName: string;
+            spaceType?: "SPACE" | "GROUP_CHAT" | "DIRECT_MESSAGE";
+            externalUserAllowed?: boolean;
+            description?: string;
+            guidelines?: string;
+          };
+          const space = await this.chat!.createSpace({
+            displayName,
+            spaceType,
+            externalUserAllowed,
+            spaceDetails: description || guidelines ? { description, guidelines } : undefined,
+          });
+          return {
+            content: [{ type: "text", text: JSON.stringify(space, null, 2) }],
+          };
+        }
+
+        if (name === "chat_delete_space") {
+          this.ensureAuthenticated();
+          const { spaceName } = args as { spaceName: string };
+          await this.chat!.deleteSpace(spaceName);
+          return {
+            content: [{ type: "text", text: `Space ${spaceName} deleted.` }],
+          };
+        }
+
+        if (name === "chat_list_messages") {
+          this.ensureAuthenticated();
+          const { spaceName, pageSize, pageToken, filter, orderBy } = args as {
+            spaceName: string;
+            pageSize?: number;
+            pageToken?: string;
+            filter?: string;
+            orderBy?: string;
+          };
+          const result = await this.chat!.listMessages(spaceName, { pageSize, pageToken, filter, orderBy });
+          return {
+            content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+          };
+        }
+
+        if (name === "chat_get_message") {
+          this.ensureAuthenticated();
+          const { messageName } = args as { messageName: string };
+          const message = await this.chat!.getMessage(messageName);
+          return {
+            content: [{ type: "text", text: JSON.stringify(message, null, 2) }],
+          };
+        }
+
+        if (name === "chat_send_message") {
+          this.ensureAuthenticated();
+          const { spaceName, text, threadKey } = args as {
+            spaceName: string;
+            text: string;
+            threadKey?: string;
+          };
+          const message = await this.chat!.sendMessage({ spaceName, text, threadKey });
+          return {
+            content: [{ type: "text", text: JSON.stringify(message, null, 2) }],
+          };
+        }
+
+        if (name === "chat_update_message") {
+          this.ensureAuthenticated();
+          const { messageName, text } = args as { messageName: string; text: string };
+          const message = await this.chat!.updateMessage({ messageName, text });
+          return {
+            content: [{ type: "text", text: JSON.stringify(message, null, 2) }],
+          };
+        }
+
+        if (name === "chat_delete_message") {
+          this.ensureAuthenticated();
+          const { messageName, force } = args as { messageName: string; force?: boolean };
+          await this.chat!.deleteMessage(messageName, force);
+          return {
+            content: [{ type: "text", text: `Message ${messageName} deleted.` }],
+          };
+        }
+
+        if (name === "chat_list_members") {
+          this.ensureAuthenticated();
+          const { spaceName, pageSize, pageToken } = args as {
+            spaceName: string;
+            pageSize?: number;
+            pageToken?: string;
+          };
+          const result = await this.chat!.listMembers(spaceName, { pageSize, pageToken });
+          return {
+            content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+          };
+        }
+
+        if (name === "chat_add_member") {
+          this.ensureAuthenticated();
+          const { spaceName, userId, role } = args as {
+            spaceName: string;
+            userId: string;
+            role?: "ROLE_MEMBER" | "ROLE_MANAGER";
+          };
+          const member = await this.chat!.addMember(spaceName, userId, role);
+          return {
+            content: [{ type: "text", text: JSON.stringify(member, null, 2) }],
+          };
+        }
+
+        if (name === "chat_remove_member") {
+          this.ensureAuthenticated();
+          const { memberName } = args as { memberName: string };
+          await this.chat!.removeMember(memberName);
+          return {
+            content: [{ type: "text", text: `Member ${memberName} removed.` }],
+          };
+        }
+
+        if (name === "chat_add_reaction") {
+          this.ensureAuthenticated();
+          const { messageName, emoji } = args as { messageName: string; emoji: string };
+          await this.chat!.addReaction(messageName, emoji);
+          return {
+            content: [{ type: "text", text: `Reaction ${emoji} added to ${messageName}.` }],
+          };
+        }
+
+        // Google Meet handlers
+        if (name === "meet_create_space") {
+          this.ensureAuthenticated();
+          const { accessType, entryPointAccess } = args as {
+            accessType?: "OPEN" | "TRUSTED" | "RESTRICTED";
+            entryPointAccess?: "ALL" | "CREATOR_APP_ONLY";
+          };
+          const space = await this.meet!.createSpace({ accessType, entryPointAccess });
+          return {
+            content: [{ type: "text", text: JSON.stringify(space, null, 2) }],
+          };
+        }
+
+        if (name === "meet_get_space") {
+          this.ensureAuthenticated();
+          const { spaceName } = args as { spaceName: string };
+          const space = await this.meet!.getSpace(spaceName);
+          return {
+            content: [{ type: "text", text: JSON.stringify(space, null, 2) }],
+          };
+        }
+
+        if (name === "meet_end_conference") {
+          this.ensureAuthenticated();
+          const { spaceName } = args as { spaceName: string };
+          await this.meet!.endActiveConference(spaceName);
+          return {
+            content: [{ type: "text", text: `Conference in ${spaceName} ended.` }],
+          };
+        }
+
+        if (name === "meet_schedule") {
+          this.ensureAuthenticated();
+          const { summary, description, startTime, endTime, attendees, timeZone, sendUpdates } = args as {
+            summary: string;
+            description?: string;
+            startTime: string;
+            endTime: string;
+            attendees?: string[];
+            timeZone?: string;
+            sendUpdates?: "all" | "externalOnly" | "none";
+          };
+          const meeting = await this.meet!.scheduleMeeting({
+            summary,
+            description,
+            startTime,
+            endTime,
+            attendees,
+            timeZone,
+            sendUpdates,
+          });
+          return {
+            content: [{ type: "text", text: JSON.stringify(meeting, null, 2) }],
+          };
+        }
+
+        if (name === "meet_create_instant") {
+          this.ensureAuthenticated();
+          const meeting = await this.meet!.createInstantMeeting();
+          return {
+            content: [{ type: "text", text: JSON.stringify(meeting, null, 2) }],
+          };
+        }
+
+        if (name === "meet_get_by_event") {
+          this.ensureAuthenticated();
+          const { eventId } = args as { eventId: string };
+          const meeting = await this.meet!.getMeetingByCalendarEvent(eventId);
+          return {
+            content: [{ type: "text", text: JSON.stringify(meeting, null, 2) }],
+          };
+        }
+
+        if (name === "meet_list_upcoming") {
+          this.ensureAuthenticated();
+          const { days } = args as { days?: number };
+          const meetings = await this.meet!.listUpcomingMeetings(days);
+          return {
+            content: [{ type: "text", text: JSON.stringify(meetings, null, 2) }],
+          };
+        }
+
+        if (name === "meet_list_conference_records") {
+          this.ensureAuthenticated();
+          const { pageSize, pageToken, filter } = args as {
+            pageSize?: number;
+            pageToken?: string;
+            filter?: string;
+          };
+          const result = await this.meet!.listConferenceRecords({ pageSize, pageToken, filter });
+          return {
+            content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+          };
+        }
+
+        if (name === "meet_get_conference_record") {
+          this.ensureAuthenticated();
+          const { recordName } = args as { recordName: string };
+          const record = await this.meet!.getConferenceRecord(recordName);
+          return {
+            content: [{ type: "text", text: JSON.stringify(record, null, 2) }],
+          };
+        }
+
+        if (name === "meet_list_participants") {
+          this.ensureAuthenticated();
+          const { conferenceRecordName, pageSize, pageToken } = args as {
+            conferenceRecordName: string;
+            pageSize?: number;
+            pageToken?: string;
+          };
+          const result = await this.meet!.listParticipants(conferenceRecordName, { pageSize, pageToken });
+          return {
+            content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+          };
+        }
+
+        if (name === "meet_list_recordings") {
+          this.ensureAuthenticated();
+          const { conferenceRecordName, pageSize, pageToken } = args as {
+            conferenceRecordName: string;
+            pageSize?: number;
+            pageToken?: string;
+          };
+          const result = await this.meet!.listRecordings(conferenceRecordName, { pageSize, pageToken });
+          return {
+            content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+          };
+        }
+
+        if (name === "meet_get_recording") {
+          this.ensureAuthenticated();
+          const { recordingName } = args as { recordingName: string };
+          const recording = await this.meet!.getRecording(recordingName);
+          return {
+            content: [{ type: "text", text: JSON.stringify(recording, null, 2) }],
+          };
+        }
+
+        if (name === "meet_list_transcripts") {
+          this.ensureAuthenticated();
+          const { conferenceRecordName, pageSize, pageToken } = args as {
+            conferenceRecordName: string;
+            pageSize?: number;
+            pageToken?: string;
+          };
+          const result = await this.meet!.listTranscripts(conferenceRecordName, { pageSize, pageToken });
+          return {
+            content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+          };
+        }
+
+        if (name === "meet_get_transcript") {
+          this.ensureAuthenticated();
+          const { transcriptName } = args as { transcriptName: string };
+          const transcript = await this.meet!.getTranscript(transcriptName);
+          return {
+            content: [{ type: "text", text: JSON.stringify(transcript, null, 2) }],
+          };
+        }
+
+        if (name === "meet_list_transcript_entries") {
+          this.ensureAuthenticated();
+          const { transcriptName, pageSize, pageToken } = args as {
+            transcriptName: string;
+            pageSize?: number;
+            pageToken?: string;
+          };
+          const result = await this.meet!.listTranscriptEntries(transcriptName, { pageSize, pageToken });
+          return {
+            content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
           };
         }
 

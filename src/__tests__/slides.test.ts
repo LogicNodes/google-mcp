@@ -98,7 +98,7 @@ describe("SlidesService", () => {
 
       const result = await service.addSlide({
         presentationId: "pres123",
-        layout: "TITLE_AND_BODY",
+        layoutType: "TITLE_AND_BODY",
       });
 
       expect(mockPresentationsBatchUpdate).toHaveBeenCalled();

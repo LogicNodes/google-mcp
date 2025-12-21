@@ -9,6 +9,7 @@ import open from "open";
 const APP_NAME = "google-mcp";
 
 const SCOPES = [
+  // Google Workspace core
   "https://www.googleapis.com/auth/documents",
   "https://www.googleapis.com/auth/spreadsheets",
   "https://www.googleapis.com/auth/drive",
@@ -17,8 +18,21 @@ const SCOPES = [
   "https://www.googleapis.com/auth/gmail.modify",
   "https://www.googleapis.com/auth/gmail.send",
   "https://www.googleapis.com/auth/contacts",
-  "https://www.googleapis.com/auth/youtube",
   "https://www.googleapis.com/auth/presentations",
+  // YouTube
+  "https://www.googleapis.com/auth/youtube",
+  // Google Forms
+  "https://www.googleapis.com/auth/forms.body",
+  "https://www.googleapis.com/auth/forms.responses.readonly",
+  // Google Chat
+  "https://www.googleapis.com/auth/chat.spaces",
+  "https://www.googleapis.com/auth/chat.spaces.create",
+  "https://www.googleapis.com/auth/chat.messages",
+  "https://www.googleapis.com/auth/chat.messages.create",
+  "https://www.googleapis.com/auth/chat.memberships",
+  // Google Meet
+  "https://www.googleapis.com/auth/meetings.space.created",
+  "https://www.googleapis.com/auth/meetings.space.readonly",
 ];
 
 /**

@@ -149,7 +149,8 @@ describe("CalendarService", () => {
         },
       });
 
-      const result = await service.createEvent("primary", {
+      const result = await service.createEvent({
+        calendarId: "primary",
         summary: "New Event",
         start: { dateTime: "2024-01-20T14:00:00Z" },
         end: { dateTime: "2024-01-20T15:00:00Z" },
@@ -188,7 +189,7 @@ describe("CalendarService", () => {
         data: { id: "e1", summary: "Updated" },
       });
 
-      const result = await service.updateEvent("primary", "e1", { summary: "Updated" });
+      const result = await service.updateEvent({ calendarId: "primary", eventId: "e1", summary: "Updated" });
 
       expect(result.summary).toBe("Updated");
     });
