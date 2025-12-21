@@ -16,7 +16,7 @@ Follow these conventions when writing TypeScript code in this project.
    ```typescript
    // Bad
    function process(data: any) { ... }
-   
+
    // Good
    function process(data: unknown) {
      if (typeof data === 'string') { ... }
@@ -27,7 +27,7 @@ Follow these conventions when writing TypeScript code in this project.
    ```typescript
    // Bad
    function getData() { return { id: 1 }; }
-   
+
    // Good
    function getData(): { id: number } { return { id: 1 }; }
    ```
@@ -36,7 +36,7 @@ Follow these conventions when writing TypeScript code in this project.
    ```typescript
    // Bad
    const name = user.name.toUpperCase();
-   
+
    // Good
    const name = user.name?.toUpperCase() ?? 'Unknown';
    ```
@@ -48,13 +48,13 @@ All class members must have explicit access modifiers:
 ```typescript
 class MyService {
   private readonly client: Client;
-  
+
   constructor(client: Client) {
     this.client = client;
   }
-  
+
   public async getData(): Promise<Data> { ... }
-  
+
   private validateInput(input: string): boolean { ... }
 }
 ```
@@ -99,7 +99,7 @@ import { UserService } from './user';
    ```typescript
    // Bad
    someAsyncFunction();
-   
+
    // Good
    await someAsyncFunction();
    // or
@@ -110,7 +110,7 @@ import { UserService } from './user';
    ```typescript
    // Bad
    getData().then(data => process(data)).catch(err => handle(err));
-   
+
    // Good
    try {
      const data = await getData();
