@@ -2789,8 +2789,10 @@ export class GoogleWorkspaceMCPServer {
       try {
         // Authentication tools don't require being authenticated
         if (name === "google_auth") {
+          // First try to initialize (loads existing valid tokens)
           const initialized = await oauth.initialize();
-          if (initialized) {
+          if (initialized && oauth.isReady()) {
+            this.initializeServices();
             return {
               content: [
                 {
@@ -2801,6 +2803,7 @@ export class GoogleWorkspaceMCPServer {
             };
           }
 
+          // Check if credentials file exists before attempting auth
           const authUrl = oauth.getAuthUrl();
           if (!authUrl) {
             return {
@@ -2814,13 +2817,31 @@ export class GoogleWorkspaceMCPServer {
             };
           }
 
+          // Automatically start the OAuth flow - opens browser and handles callback
+          console.error("Starting OAuth authentication flow...");
+          const authenticated = await oauth.authenticate();
+          
+          if (authenticated) {
+            this.initializeServices();
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: "Successfully authenticated with Google! You can now use all Google Workspace tools.",
+                },
+              ],
+            };
+          }
+
+          // If automatic flow failed, provide manual instructions
           return {
             content: [
               {
                 type: "text",
-                text: `Please authenticate with Google by visiting:\n\n${authUrl}\n\nAfter authenticating, the browser will redirect you. If running in a terminal, authentication will complete automatically. Otherwise, use the google_auth_code tool with the code from the URL.`,
+                text: `Automatic authentication failed. Please try manually:\n\n1. Visit: ${authUrl}\n2. Complete the authentication\n3. Use the google_auth_code tool with the code from the URL`,
               },
             ],
+            isError: true,
           };
         }
 
@@ -4594,13 +4615,13 @@ export class GoogleWorkspaceMCPServer {
     console.error(`  Credentials file: ${paths.credentialsPath}`);
     console.error(`  Token file: ${paths.tokenPath}`);
 
-    // Try to initialize OAuth on startup
-    await oauth.initialize();
-    if (oauth.isReady()) {
+    // Try to initialize OAuth on startup, auto-triggering auth if tokens are missing/expired
+    const authenticated = await oauth.initializeWithAuth();
+    if (authenticated && oauth.isReady()) {
       this.initializeServices();
       console.error("  Authentication: Ready");
     } else {
-      console.error("  Authentication: Not configured (run google_auth tool)");
+      console.error("  Authentication: Not configured (run google_auth tool or add credentials)");
     }
 
     const transport = new StdioServerTransport();

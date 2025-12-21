@@ -233,13 +233,34 @@ export class GoogleOAuth {
           this.saveTokens(newTokens);
           this.oauth2Client.setCredentials(newTokens);
         } catch (error) {
-          console.error("Error refreshing token:", error);
+          console.error("Error refreshing token, re-authentication required:", error);
+          // Clear invalid tokens so authenticate() knows to start fresh
+          this.isAuthenticated = false;
           return false;
         }
       }
 
       this.isAuthenticated = true;
       return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Initialize and automatically trigger authentication if needed.
+   * This opens the browser for OAuth if tokens are missing or expired.
+   */
+  public async initializeWithAuth(): Promise<boolean> {
+    const initialized = await this.initialize();
+    if (initialized && this.isAuthenticated) {
+      return true;
+    }
+
+    // If we have credentials but no valid tokens, automatically authenticate
+    if (this.oauth2Client) {
+      console.error("No valid tokens found, starting authentication flow...");
+      return await this.authenticate();
     }
 
     return false;
