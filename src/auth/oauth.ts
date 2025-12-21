@@ -2,8 +2,11 @@ import { google, Auth } from "googleapis";
 import * as fs from "fs";
 import * as path from "path";
 import * as http from "http";
+import * as os from "os";
 import { URL } from "url";
 import open from "open";
+
+const APP_NAME = "google-mcp";
 
 const SCOPES = [
   "https://www.googleapis.com/auth/documents",
@@ -18,17 +21,67 @@ const SCOPES = [
   "https://www.googleapis.com/auth/presentations",
 ];
 
-const TOKEN_PATH = path.join(
-  process.env.HOME || process.env.USERPROFILE || ".",
-  ".google-mcp",
-  "tokens.json"
-);
+/**
+ * Get the configuration directory following platform standards:
+ * - Linux: $XDG_CONFIG_HOME/google-mcp or ~/.config/google-mcp
+ * - macOS: ~/Library/Application Support/google-mcp or $XDG_CONFIG_HOME/google-mcp
+ * - Windows: %APPDATA%/google-mcp
+ */
+function getConfigDir(): string {
+  const platform = os.platform();
+  
+  if (platform === "win32") {
+    // Windows: Use APPDATA
+    const appData = process.env.APPDATA || path.join(os.homedir(), "AppData", "Roaming");
+    return path.join(appData, APP_NAME);
+  }
+  
+  if (platform === "darwin") {
+    // macOS: Prefer XDG if set, otherwise use Application Support
+    if (process.env.XDG_CONFIG_HOME) {
+      return path.join(process.env.XDG_CONFIG_HOME, APP_NAME);
+    }
+    return path.join(os.homedir(), "Library", "Application Support", APP_NAME);
+  }
+  
+  // Linux and others: Use XDG_CONFIG_HOME or default to ~/.config
+  const xdgConfig = process.env.XDG_CONFIG_HOME || path.join(os.homedir(), ".config");
+  return path.join(xdgConfig, APP_NAME);
+}
 
-const CREDENTIALS_PATH = path.join(
-  process.env.HOME || process.env.USERPROFILE || ".",
-  ".google-mcp",
-  "credentials.json"
-);
+/**
+ * Get the data directory following platform standards:
+ * - Linux: $XDG_DATA_HOME/google-mcp or ~/.local/share/google-mcp
+ * - macOS: ~/Library/Application Support/google-mcp or $XDG_DATA_HOME/google-mcp
+ * - Windows: %APPDATA%/google-mcp
+ */
+function getDataDir(): string {
+  const platform = os.platform();
+  
+  if (platform === "win32") {
+    // Windows: Use APPDATA (same as config for simplicity)
+    const appData = process.env.APPDATA || path.join(os.homedir(), "AppData", "Roaming");
+    return path.join(appData, APP_NAME);
+  }
+  
+  if (platform === "darwin") {
+    // macOS: Prefer XDG if set, otherwise use Application Support
+    if (process.env.XDG_DATA_HOME) {
+      return path.join(process.env.XDG_DATA_HOME, APP_NAME);
+    }
+    return path.join(os.homedir(), "Library", "Application Support", APP_NAME);
+  }
+  
+  // Linux and others: Use XDG_DATA_HOME or default to ~/.local/share
+  const xdgData = process.env.XDG_DATA_HOME || path.join(os.homedir(), ".local", "share");
+  return path.join(xdgData, APP_NAME);
+}
+
+// Credentials are configuration - use config directory
+const CREDENTIALS_PATH = path.join(getConfigDir(), "credentials.json");
+
+// Tokens are data - use data directory
+const TOKEN_PATH = path.join(getDataDir(), "tokens.json");
 
 interface CredentialsFile {
   installed?: {
@@ -48,13 +101,20 @@ export class GoogleOAuth {
   private isAuthenticated = false;
 
   constructor() {
-    this.ensureDirectoryExists();
+    this.ensureDirectoriesExist();
   }
 
-  private ensureDirectoryExists(): void {
-    const dir = path.dirname(TOKEN_PATH);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
+  private ensureDirectoriesExist(): void {
+    // Ensure config directory exists
+    const configDir = path.dirname(CREDENTIALS_PATH);
+    if (!fs.existsSync(configDir)) {
+      fs.mkdirSync(configDir, { recursive: true });
+    }
+    
+    // Ensure data directory exists
+    const dataDir = path.dirname(TOKEN_PATH);
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
     }
   }
 

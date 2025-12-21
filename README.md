@@ -107,11 +107,24 @@ Before using this server, you need to set up Google Cloud credentials:
 
 ### 3. Place Credentials File
 
-Save the downloaded JSON file as `credentials.json` at:
+Save the downloaded JSON file as `credentials.json` at the appropriate location for your platform:
 
+**Linux:**
 ```
-~/.google-mcp/credentials.json
+~/.config/google-mcp/credentials.json
 ```
+(or `$XDG_CONFIG_HOME/google-mcp/credentials.json` if XDG_CONFIG_HOME is set)
+
+**macOS:**
+```
+~/Library/Application Support/google-mcp/credentials.json
+```
+
+**Windows:**
+```
+%APPDATA%\google-mcp\credentials.json
+```
+(typically `C:\Users\<username>\AppData\Roaming\google-mcp\credentials.json`)
 
 The file should look like:
 ```json
@@ -165,7 +178,10 @@ On first use, call the `google_auth` tool to initiate OAuth authentication:
 3. Grant the requested permissions
 4. Authentication will complete automatically
 
-Tokens are stored locally at `~/.google-mcp/tokens.json` and will be refreshed automatically.
+Tokens are stored locally and will be refreshed automatically:
+- **Linux:** `~/.local/share/google-mcp/tokens.json` (or `$XDG_DATA_HOME/google-mcp/`)
+- **macOS:** `~/Library/Application Support/google-mcp/tokens.json`
+- **Windows:** `%APPDATA%\google-mcp\tokens.json`
 
 ## Available Tools
 
