@@ -106,7 +106,15 @@ import { RouterLink } from '@angular/router';
         </h2>
         <div class="ml-10 space-y-6">
           <div class="google-card p-6">
-            <h3 class="font-medium text-[var(--color-google-gray-900)] mb-3">Install from npm</h3>
+            <h3 class="font-medium text-[var(--color-google-gray-900)] mb-3">Run with npx (Recommended)</h3>
+            <p class="text-sm text-[var(--color-google-gray-600)] mb-3">No installation required - run directly:</p>
+            <div class="code-block p-4">
+              <code class="text-sm">npx &#64;pegasusheavy/google-mcp</code>
+            </div>
+          </div>
+
+          <div class="google-card p-6">
+            <h3 class="font-medium text-[var(--color-google-gray-900)] mb-3">Or install globally</h3>
             <div class="code-block p-4">
               <code class="text-sm">npm install -g &#64;pegasusheavy/google-mcp</code>
             </div>
@@ -117,7 +125,7 @@ import { RouterLink } from '@angular/router';
             <div class="code-block p-4 space-y-2">
               <div><code class="text-sm">git clone https://github.com/pegasusheavy/google-mcp.git</code></div>
               <div><code class="text-sm">cd google-mcp</code></div>
-              <div><code class="text-sm">pnpm install && pnpm build</code></div>
+              <div><code class="text-sm">npm install && npm run build</code></div>
             </div>
           </div>
         </div>
@@ -166,7 +174,8 @@ import { RouterLink } from '@angular/router';
               <pre class="text-sm overflow-x-auto"><code>&#123;
   "mcpServers": &#123;
     "google": &#123;
-      "command": "google-mcp"
+      "command": "npx",
+      "args": ["&#64;pegasusheavy/google-mcp"]
     &#125;
   &#125;
 &#125;</code></pre>
