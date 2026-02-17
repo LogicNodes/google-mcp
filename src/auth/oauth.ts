@@ -210,6 +210,12 @@ export class GoogleOAuth {
 
   private loadCredentials(): CredentialsFile | null {
     try {
+      // Check environment variable first for multi-tenant support
+      const envCredentials = process.env.GOOGLE_CREDENTIALS_JSON;
+      if (envCredentials) {
+        return JSON.parse(envCredentials) as CredentialsFile;
+      }
+      // Fall back to file-based credentials
       if (fs.existsSync(CREDENTIALS_PATH)) {
         const content = fs.readFileSync(CREDENTIALS_PATH, "utf-8");
         return JSON.parse(content) as CredentialsFile;
@@ -221,6 +227,10 @@ export class GoogleOAuth {
   }
 
   private saveTokens(tokens: Auth.Credentials): void {
+    // Skip file save when using environment variables (tokens managed externally)
+    if (process.env.GOOGLE_TOKENS_JSON) {
+      return;
+    }
     // Ensure directory exists before saving
     this.ensureDirectoriesExist();
     fs.writeFileSync(TOKEN_PATH, JSON.stringify(tokens, null, 2), { mode: 0o600 });
@@ -228,6 +238,12 @@ export class GoogleOAuth {
 
   private loadTokens(): Auth.Credentials | null {
     try {
+      // Check environment variable first for multi-tenant support
+      const envTokens = process.env.GOOGLE_TOKENS_JSON;
+      if (envTokens) {
+        return JSON.parse(envTokens) as Auth.Credentials;
+      }
+      // Fall back to file-based tokens
       if (fs.existsSync(TOKEN_PATH)) {
         const content = fs.readFileSync(TOKEN_PATH, "utf-8");
         return JSON.parse(content) as Auth.Credentials;
