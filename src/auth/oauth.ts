@@ -228,7 +228,7 @@ export class GoogleOAuth {
 
   private saveTokens(tokens: Auth.Credentials): void {
     // Skip file save when using environment variables (tokens managed externally)
-    if (process.env.GOOGLE_TOKENS_JSON) {
+    if (process.env.GOOGLE_TOKENS_JSON || process.env.GOOGLE_REFRESH_TOKEN) {
       return;
     }
     // Ensure directory exists before saving
@@ -242,6 +242,12 @@ export class GoogleOAuth {
       const envTokens = process.env.GOOGLE_TOKENS_JSON;
       if (envTokens) {
         return JSON.parse(envTokens) as Auth.Credentials;
+      }
+      // Also accept plain refresh token string
+      const envRefreshToken = process.env.GOOGLE_REFRESH_TOKEN;
+      if (envRefreshToken) {
+        const credentials: Auth.Credentials = { refresh_token: envRefreshToken };
+        return credentials;
       }
       // Fall back to file-based tokens
       if (fs.existsSync(TOKEN_PATH)) {
